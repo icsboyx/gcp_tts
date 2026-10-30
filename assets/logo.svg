@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">gcp_tts logo</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f2937"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="8" y="8" width="240" height="240" rx="48" fill="url(#bg)"/>
+
+  <!-- Speech bubble -->
+  <path d="M56 64 h144 a24 24 0 0 1 24 24 v68 a24 24 0 0 1 -24 24 h-84 l-34 28 v-28 h-26 a24 24 0 0 1 -24 -24 v-68 a24 24 0 0 1 24 -24 z"
+        fill="none" stroke="#e5e7eb" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Waveform bars: text turning into sound -->
+  <g fill="url(#wave)" transform="translate(-9 0)">
+    <rect x="70"  y="110" width="14" height="24" rx="7"/>
+    <rect x="94"  y="96"  width="14" height="52" rx="7"/>
+    <rect x="118" y="82"  width="14" height="80" rx="7"/>
+    <rect x="142" y="100" width="14" height="44" rx="7"/>
+    <rect x="166" y="90"  width="14" height="64" rx="7"/>
+    <rect x="190" y="112" width="14" height="20" rx="7"/>
+  </g>
+</svg>

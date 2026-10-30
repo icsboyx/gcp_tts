@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="gcp_tts logo" width="128">
+</p>
+
 # gcp_tts
 
 Minimal async Rust client for the [Google Cloud Text-to-Speech](https://cloud.google.com/text-to-speech) REST API.
