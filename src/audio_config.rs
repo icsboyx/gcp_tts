@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// Format of the returned audio. Defaults to [`AudioEncoding::Mp3`].
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum AudioEncoding {
     #[serde(rename = "AUDIO_ENCODING_UNSPECIFIED")]
     Unspecified,
@@ -75,6 +76,7 @@ impl std::fmt::Display for AudioEncoding {
 
 /// Audio effects profile that optimizes the output for a class of device.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
+#[non_exhaustive]
 pub enum EffectsProfile {
     #[serde(rename = "wearable-class-device")]
     WearableClassDevice,

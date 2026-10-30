@@ -2,7 +2,7 @@
 
 use crate::{GcpApiError, format_api_error};
 use rand::seq::IndexedRandom;
-pub use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Error, Formatter};
 
 /// Endpoint of the `voices.list` method.
@@ -12,6 +12,7 @@ pub static GCP_VOICES_URL: &str = "https://texttospeech.googleapis.com/v1/voices
 ///
 /// Codes not listed here are kept as `NotClassified(code)`.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
+#[non_exhaustive]
 pub enum LanguageCodes {
     #[serde(rename = "af-ZA")]
     Afrikaans,
@@ -233,6 +234,7 @@ impl AsRef<str> for LanguageCodes {
 /// Names without a category part are [`VoiceCategory::Uncategorized`];
 /// unknown categories are kept as `NotClassified(name)`.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
+#[non_exhaustive]
 pub enum VoiceCategory {
     Studio,
     Standard,
@@ -352,6 +354,7 @@ pub struct Voice {
 
 /// Gender of a voice.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum SsmlGender {
     #[serde(rename = "FEMALE")]
     Female,
@@ -384,8 +387,8 @@ pub struct Voices {
 }
 
 impl Voices {
-    /// Downloads the voice list. Prefer [`GcpTTS::get_voices`](crate::GcpTTS::get_voices).
-    pub async fn get_voices(
+    /// Downloads the voice list. Called by [`GcpTTS::get_voices`](crate::GcpTTS::get_voices).
+    pub(crate) async fn get_voices(
         api_key: impl AsRef<str>,
         http_client: &reqwest::Client,
     ) -> Result<Voices, GcpApiError> {

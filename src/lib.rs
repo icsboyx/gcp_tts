@@ -29,7 +29,7 @@
 //! ```
 
 use crate::{
-    GcpApiErrorKind::{InvalidInput, Request},
+    GcpApiErrorKind::{GcpApi, InvalidInput},
     speech_config::SpeechConfig,
     synthesis::{GCP_SYNTHESIS_URL, SynthesisResponse},
     voices::Voices,
@@ -37,7 +37,7 @@ use crate::{
 
 pub mod audio_config;
 pub mod speech_config;
-pub mod synthesis;
+mod synthesis;
 pub mod voices;
 
 /// Maximum size of the input text accepted by GCP in a single request, in bytes.
@@ -84,8 +84,12 @@ impl GcpTTS {
     ///
     /// - [`GcpApiErrorKind::InvalidInput`]: text too long, voice without a language
     ///   code, or API key with characters not allowed in an HTTP header.
-    /// - [`GcpApiErrorKind::Request`]: network failure, non-success HTTP status
-    ///   (the message contains the status and the GCP error body), or invalid response.
+    /// - [`GcpApiErrorKind::Network`]: the request could not be sent or the
+    ///   response could not be read.
+    /// - [`GcpApiErrorKind::GcpApi`]: GCP answered with a non-success HTTP status,
+    ///   available from [`GcpApiError::status`].
+    /// - [`GcpApiErrorKind::InvalidResponse`]: the response body is not valid JSON
+    ///   of the expected shape.
     /// - [`GcpApiErrorKind::AudioError`]: the returned audio is not valid base64.
     pub async fn synthesize_speech(
         &self,
@@ -119,7 +123,7 @@ impl GcpTTS {
 
         let request_debug = format!(
             "POST {GCP_SYNTHESIS_URL}\nPayload:\n{}",
-            serde_json::to_string_pretty(&payload)?
+            serde_json::to_string_pretty(&payload.redacted())?
         );
 
         let response = request.send().await?;
@@ -140,9 +144,15 @@ pub enum GcpApiErrorKind {
     InvalidInput,
     /// An endpoint URL could not be parsed. Should never happen: the URLs are constants.
     Url,
-    /// The request failed: network error, non-success HTTP status from GCP,
-    /// or an invalid response body. See the message for details.
-    Request,
+    /// The request could not be sent or the response could not be read:
+    /// DNS, connection, TLS or a dropped connection. Usually worth retrying.
+    Network,
+    /// GCP answered with a non-success HTTP status. The message contains the
+    /// GCP error and [`GcpApiError::status`] the HTTP status code: retry on
+    /// `429` and `5xx`, fix the request or the project setup on other `4xx`.
+    GcpApi,
+    /// The response body is not valid JSON of the expected shape.
+    InvalidResponse,
     /// JSON serialization failed while building an error message.
     /// Should never happen with this crate's types.
     SerdeJson,
@@ -157,6 +167,7 @@ pub enum GcpApiErrorKind {
 pub struct GcpApiError {
     kind: GcpApiErrorKind,
     message: String,
+    status: Option<u16>,
 }
 
 impl GcpApiError {
@@ -164,8 +175,10 @@ impl GcpApiError {
         Self {
             kind,
             message: message.into(),
+            status: None,
         }
     }
+
     /// Returns the error category.
     pub fn kind(&self) -> GcpApiErrorKind {
         self.kind
@@ -174,6 +187,13 @@ impl GcpApiError {
     /// Returns the error message.
     pub fn message(&self) -> &str {
         &self.message
+    }
+
+    /// Returns the HTTP status code sent by GCP.
+    ///
+    /// Set only for [`GcpApiErrorKind::GcpApi`] errors.
+    pub fn status(&self) -> Option<u16> {
+        self.status
     }
 }
 
@@ -197,10 +217,20 @@ macro_rules! impl_from_error {
     };
 }
 
+impl From<reqwest::Error> for GcpApiError {
+    fn from(error: reqwest::Error) -> Self {
+        let kind = if error.is_decode() {
+            GcpApiErrorKind::InvalidResponse
+        } else {
+            GcpApiErrorKind::Network
+        };
+        GcpApiError::new(kind, error.to_string())
+    }
+}
+
 impl_from_error!(
     url::ParseError => GcpApiErrorKind::Url,
     reqwest::header::InvalidHeaderValue => GcpApiErrorKind::InvalidInput,
-    reqwest::Error => GcpApiErrorKind::Request,
     serde_json::Error => GcpApiErrorKind::SerdeJson,
     base64::DecodeError => GcpApiErrorKind::AudioError,
     String => GcpApiErrorKind::InvalidInput,
@@ -241,17 +271,70 @@ async fn format_api_error(
         None => format!("GCP API request failed: HTTP {status}"),
     };
 
-    Ok(GcpApiError::new(
-        Request,
+    let mut error = GcpApiError::new(
+        GcpApi,
         format!(
             "{title}\n{message}\n\nRequest:\n{}\n\nResponse:\n  URL: {url}\n  Body:\n{formatted_body}",
             request_dbg.as_ref()
         ),
-    ))
+    );
+    error.status = Some(status.as_u16());
+    Ok(error)
 }
 
 impl std::fmt::Debug for GcpApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "GcpApiError({})", self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn response(status: u16, body: &'static str) -> reqwest::Response {
+        http::Response::builder()
+            .status(status)
+            .body(body)
+            .unwrap()
+            .into()
+    }
+
+    #[tokio::test]
+    async fn gcp_error_body_is_parsed() {
+        let body = r#"{ "error": { "code": 429, "message": "Quota exceeded", "status": "RESOURCE_EXHAUSTED" } }"#;
+
+        let error = format_api_error("POST test", response(429, body))
+            .await
+            .unwrap();
+
+        assert_eq!(error.kind(), GcpApi);
+        assert_eq!(error.status(), Some(429));
+        assert!(error.message().contains("HTTP 429 Too Many Requests (RESOURCE_EXHAUSTED)"));
+        assert!(error.message().contains("Quota exceeded"));
+    }
+
+    #[tokio::test]
+    async fn non_json_error_body_keeps_status_and_text() {
+        let error = format_api_error("POST test", response(502, "<html>Bad Gateway</html>"))
+            .await
+            .unwrap();
+
+        assert_eq!(error.kind(), GcpApi);
+        assert_eq!(error.status(), Some(502));
+        assert!(error.message().contains("<html>Bad Gateway</html>"));
+    }
+
+    #[tokio::test]
+    async fn undecodable_success_body_is_invalid_response() {
+        let error: GcpApiError = response(200, "not json")
+            .json::<SynthesisResponse>()
+            .await
+            .err()
+            .unwrap()
+            .into();
+
+        assert_eq!(error.kind(), GcpApiErrorKind::InvalidResponse);
+        assert_eq!(error.status(), None);
     }
 }

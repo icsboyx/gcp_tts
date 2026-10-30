@@ -7,7 +7,6 @@ use gcp_tts::{
     GCP_TTS_SYNTHESIS_MAX_TEXT_LENGTH, GcpApiErrorKind, GcpTTS,
     audio_config::AudioConfig,
     speech_config::SpeechConfig,
-    synthesis::{SynthesisPayload, SynthesisResponse, VoiceSelectionParams},
     voices::Voices,
 };
 
@@ -57,27 +56,17 @@ async fn invalid_api_key_is_rejected_by_get_voices() {
     assert_eq!(error.kind(), GcpApiErrorKind::InvalidInput);
 }
 
-#[test]
-fn voice_without_language_code_is_rejected() {
+#[tokio::test]
+async fn voice_without_language_code_is_rejected() {
     let json = r#"{ "voices": [
         { "languageCodes": [], "name": "NoLanguage", "ssmlGender": "FEMALE", "naturalSampleRateHertz": 24000 }
     ] }"#;
     let voices: Voices = serde_json::from_str(json).unwrap();
-    let voice = &voices.as_slice()[0];
+    let config = SpeechConfig::new(voices.as_slice()[0].clone(), AudioConfig::default());
 
-    let error = VoiceSelectionParams::try_from(voice).unwrap_err();
+    let error = GcpTTS::new("unused-key")
+        .synthesize_speech("Ciao", config)
+        .await
+        .unwrap_err();
     assert_eq!(error.kind(), GcpApiErrorKind::InvalidInput);
-
-    let error = SynthesisPayload::text("Ciao", voice, AudioConfig::default()).unwrap_err();
-    assert_eq!(error.kind(), GcpApiErrorKind::InvalidInput);
-}
-
-#[test]
-fn invalid_base64_audio_is_an_audio_error() {
-    let response: SynthesisResponse =
-        serde_json::from_str(r#"{ "audioContent": "@@not-base64@@" }"#).unwrap();
-
-    let error = response.audio_content().unwrap_err();
-
-    assert_eq!(error.kind(), GcpApiErrorKind::AudioError);
 }

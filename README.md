@@ -14,7 +14,8 @@ Minimal async Rust client for the [Google Cloud Text-to-Speech](https://cloud.go
 ## Requirements
 
 - A Google Cloud project with the Text-to-Speech API enabled
-- An API key for that project
+- An API key for that project. Only API key authentication is supported:
+  service accounts, OAuth and Application Default Credentials are not.
 - A [Tokio](https://tokio.rs) runtime (the API is `async`)
 
 ## Installation

@@ -15,3 +15,7 @@
   - [x] Replace `GcpApiError(String)` with `GcpApiError { kind, message }` and `GcpApiErrorKind`
 - [x] Test the full flow in `examples/lib_test.rs`: text → voice → audio file
 - [x] Add automated tests for serialization and error cases (`tests/`)
+- [ ] Send SSML and markup input (`SynthesisPayload::ssml` / `::markup` are public but `GcpTTS` only exposes `synthesize_speech` for plain text)
+  - [ ] Add `GcpTTS` methods for SSML and markup input
+  - [ ] Apply the 5000-byte input limit to SSML and markup too
+  - [ ] Add tests

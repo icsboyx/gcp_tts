@@ -295,6 +295,7 @@ dependencies = [
  "base64",
  "chrono",
  "dotenv",
+ "http",
  "rand",
  "reqwest",
  "serde",
