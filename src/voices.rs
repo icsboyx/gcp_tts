@@ -3,17 +3,14 @@
 use crate::{GcpApiError, format_api_error};
 use rand::seq::IndexedRandom;
 pub use serde::{Deserialize, Serialize};
-use std::{
-    any::type_name,
-    fmt::{Display, Error, Formatter},
-};
+use std::fmt::{Display, Error, Formatter};
 
 /// Endpoint of the `voices.list` method.
 pub static GCP_VOICES_URL: &str = "https://texttospeech.googleapis.com/v1/voices";
 
 /// BCP-47 language code of a voice.
 ///
-/// Codes not listed here are kept as `NOTCASSIFIED(code)`.
+/// Codes not listed here are kept as `NotClassified(code)`.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 pub enum LanguageCodes {
     #[serde(rename = "af-ZA")]
@@ -143,7 +140,7 @@ pub enum LanguageCodes {
     #[serde(rename = "yue-HK")]
     CantoneseHongKong,
     #[serde(untagged)]
-    NOTCASSIFIED(#[serde(deserialize_with = "Self::log_unknown")] String),
+    NotClassified(String),
 }
 
 impl LanguageCodes {
@@ -213,17 +210,8 @@ impl LanguageCodes {
             Self::Urdu => "ur-IN",
             Self::Vietnamese => "vi-VN",
             Self::CantoneseHongKong => "yue-HK",
-            Self::NOTCASSIFIED(tag) => tag.as_str(),
+            Self::NotClassified(tag) => tag.as_str(),
         }
-    }
-
-    fn log_unknown<'de, D>(deserializer: D) -> Result<String, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let code = String::deserialize(deserializer)?;
-        log_unknown_value::<Self>(&code);
-        Ok(code)
     }
 }
 
@@ -243,7 +231,7 @@ impl AsRef<str> for LanguageCodes {
 /// (e.g. `it-IT-Standard-A` → [`VoiceCategory::Standard`]).
 ///
 /// Names without a category part are [`VoiceCategory::Uncategorized`];
-/// unknown categories are kept as `NOTCASSIFIED(name)`.
+/// unknown categories are kept as `NotClassified(name)`.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 pub enum VoiceCategory {
     Studio,
@@ -257,7 +245,7 @@ pub enum VoiceCategory {
     Casual,
     Uncategorized,
     #[serde(untagged)]
-    NOTCASSIFIED(#[serde(deserialize_with = "Self::log_unknown")] String),
+    NotClassified(String),
 }
 
 impl AsRef<str> for VoiceCategory {
@@ -273,19 +261,8 @@ impl AsRef<str> for VoiceCategory {
             Self::Polyglot => "Polyglot",
             Self::Uncategorized => "Uncategorized",
             Self::Casual => "Casual",
-            Self::NOTCASSIFIED(val) => val.as_str(),
+            Self::NotClassified(val) => val.as_str(),
         }
-    }
-}
-
-impl VoiceCategory {
-    fn log_unknown<'de, D>(deserializer: D) -> Result<String, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let code = String::deserialize(deserializer)?;
-        log_unknown_value::<Self>(&code);
-        Ok(code)
     }
 }
 
@@ -302,10 +279,7 @@ impl From<&str> for VoiceCategory {
             "Polyglot" => Self::Polyglot,
             "Uncategorized" => Self::Uncategorized,
             "Casual" => Self::Casual,
-            val => {
-                log_unknown_value::<Self>(val);
-                Self::NOTCASSIFIED(val.to_string())
-            }
+            val => Self::NotClassified(val.to_string()),
         }
     }
 }
@@ -570,12 +544,4 @@ impl Voices {
     pub fn len(&self) -> usize {
         self.voices.len()
     }
-}
-
-fn log_unknown_value<T>(value: impl AsRef<str>) {
-    eprintln!(
-        "Unknown value encountered during deserialization for type: {} and value: {}",
-        type_name::<T>(),
-        value.as_ref()
-    );
 }

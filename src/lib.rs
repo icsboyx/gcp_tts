@@ -77,14 +77,16 @@ impl GcpTTS {
     /// The audio format is the one set in the [`AudioConfig`](audio_config::AudioConfig)
     /// of `speech_config` (MP3 by default), ready to be written to a file.
     ///
-    /// GCP rejects input larger than 5000 bytes per request.
-    /// Synthesis is billed per character.
+    /// Input larger than [`GCP_TTS_SYNTHESIS_MAX_TEXT_LENGTH`] bytes is rejected
+    /// before sending the request. Synthesis is billed per character.
     ///
     /// # Errors
     ///
-    /// Returns [`GcpApiError`] on network failure, on a non-success HTTP status
-    /// (the message contains the status and the GCP error body), or if the
-    /// response cannot be decoded.
+    /// - [`GcpApiErrorKind::InvalidInput`]: text too long, voice without a language
+    ///   code, or API key with characters not allowed in an HTTP header.
+    /// - [`GcpApiErrorKind::Request`]: network failure, non-success HTTP status
+    ///   (the message contains the status and the GCP error body), or invalid response.
+    /// - [`GcpApiErrorKind::AudioError`]: the returned audio is not valid base64.
     pub async fn synthesize_speech(
         &self,
         text: &str,
@@ -97,7 +99,7 @@ impl GcpTTS {
                     "Text to synthesize is more than {GCP_TTS_SYNTHESIS_MAX_TEXT_LENGTH} bytes."
                 ),
             ));
-        };
+        }
 
         let payload = synthesis::SynthesisPayload::text(
             text,
@@ -252,9 +254,4 @@ impl std::fmt::Debug for GcpApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "GcpApiError({})", self)
     }
-}
-
-fn _paragraph(text: impl AsRef<str>) -> String {
-    let separator = "_".repeat(100);
-    format!("{separator}\n{}\n{separator}", text.as_ref())
 }

@@ -17,11 +17,20 @@ fn deserializes_voice_list() {
 #[test]
 fn derives_category_from_voice_name() {
     let voices = sample_voices();
-    let category_of = |name: &str| voices.get_voice_by_name(name).unwrap().voice_category.clone();
+    let category_of = |name: &str| {
+        voices
+            .get_voice_by_name(name)
+            .unwrap()
+            .voice_category
+            .clone()
+    };
 
     assert_eq!(category_of("it-IT-Standard-A"), VoiceCategory::Standard);
     assert_eq!(category_of("it-IT-Neural2-C"), VoiceCategory::Neural2);
-    assert_eq!(category_of("en-US-Chirp3-HD-Achernar"), VoiceCategory::Chirp3Hd);
+    assert_eq!(
+        category_of("en-US-Chirp3-HD-Achernar"),
+        VoiceCategory::Chirp3Hd
+    );
     assert_eq!(category_of("Achird"), VoiceCategory::Uncategorized);
 }
 
@@ -36,12 +45,12 @@ fn unknown_values_do_not_break_deserialization() {
 
     assert_eq!(
         voice.language_codes,
-        vec![LanguageCodes::NOTCASSIFIED("xx-YY".to_string())]
+        vec![LanguageCodes::NotClassified("xx-YY".to_string())]
     );
     assert_eq!(voice.gender, SsmlGender::SsmlVoiceGenderUnspecified);
     assert_eq!(
         voice.voice_category,
-        VoiceCategory::NOTCASSIFIED("Future".to_string())
+        VoiceCategory::NotClassified("Future".to_string())
     );
 }
 
@@ -73,7 +82,11 @@ fn filter_by_text_is_case_insensitive() {
 
 #[test]
 fn get_voice_by_name_is_case_insensitive() {
-    assert!(sample_voices().get_voice_by_name("IT-it-standard-a").is_some());
+    assert!(
+        sample_voices()
+            .get_voice_by_name("IT-it-standard-a")
+            .is_some()
+    );
     assert!(sample_voices().get_voice_by_name("missing").is_none());
 }
 
