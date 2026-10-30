@@ -6,6 +6,10 @@ rust-version = "1.87"
 license = "MIT"
 description = "Minimal async client for the Google Cloud Text-to-Speech REST API"
 repository = "https://github.com/icsboyx/gcp_tts"
+readme = "README.md"
+keywords = ["tts", "text-to-speech", "google-cloud", "gcp", "speech"]
+categories = ["api-bindings", "multimedia::audio"]
+exclude = [".vscode/", ".gitignore", "TODO.md", "assets/"]
 
 [lib]
 name = "gcp_tts"

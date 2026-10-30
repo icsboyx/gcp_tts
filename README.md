@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="gcp_tts logo" width="128">
+  <img src="https://raw.githubusercontent.com/icsboyx/gcp_tts/master/assets/logo.svg" alt="gcp_tts logo" width="128">
 </p>
 
 # gcp_tts
@@ -20,11 +20,9 @@ Minimal async Rust client for the [Google Cloud Text-to-Speech](https://cloud.go
 
 ## Installation
 
-The crate is not published on crates.io yet. Add it as a git dependency:
-
 ```toml
 [dependencies]
-gcp_tts = { git = "https://github.com/icsboyx/gcp_tts" }
+gcp_tts = "0.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
 
@@ -94,4 +92,4 @@ It lists the voices, synthesizes a short sentence to a timestamped `.mp3` file a
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/icsboyx/gcp_tts/blob/master/LICENSE)
