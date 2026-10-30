@@ -15,11 +15,11 @@ Minimal async Rust client for the [Google Cloud Text-to-Speech](https://cloud.go
 
 ## Installation
 
-The crate is not published on crates.io yet. Add it as a path dependency:
+The crate is not published on crates.io yet. Add it as a git dependency:
 
 ```toml
 [dependencies]
-gcp_tts = { path = "../gcp_tts" }
+gcp_tts = { git = "https://github.com/icsboyx/gcp_tts" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
 

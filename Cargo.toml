@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 description = "Minimal async client for the Google Cloud Text-to-Speech REST API"
+repository = "https://github.com/icsboyx/gcp_tts"
 
 [lib]
 name = "gcp_tts"
