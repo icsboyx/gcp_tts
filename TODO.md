@@ -1,0 +1,17 @@
+- [x] Configure GCP
+- [x] Get an API key
+- [x] Set up a GCP project
+- [x] Retrieve the voice list
+  - [x] Create `Voice`
+  - [x] Create voice filters
+- [x] Complete `AudioConfig`
+- [x] Create types for text/SSML input and voice selection
+- [x] Implement `synthesize` and decode the returned audio
+- [x] Handle errors and validate parameters
+  - [x] Format GCP API errors (`format_api_error`)
+  - [x] Clamp `AudioConfig` values (speaking rate, pitch, volume gain)
+  - [x] Reject input text over 5000 bytes before sending the request
+  - [x] Add a fallback variant for unknown `SsmlGender` values
+  - [x] Replace `GcpApiError(String)` with `GcpApiError { kind, message }` and `GcpApiErrorKind`
+- [x] Test the full flow in `examples/lib_test.rs`: text → voice → audio file
+- [x] Add automated tests for serialization and error cases (`tests/`)
